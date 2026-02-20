@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "trading-backtester-v2"
+version = "2.0.0-dev"
+description = "Professional quantitative trading research platform - V2"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Noufal"}]
+
+dependencies = [
+    # Core
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+
+    # Data Processing
+    "polars>=0.20",
+    "pandas>=2.1",
+    "numpy>=1.26",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+
+    # Caching
+    "redis[asyncio]>=5.0",
+
+    # HTTP Client
+    "aiohttp>=3.9",
+    "aiolimiter>=1.1",
+
+    # Configuration
+    "pyyaml>=6.0",
+
+    # Monitoring
+    "structlog>=24.1",
+    "prometheus-client>=0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-xdist>=3.5",
+    "pytest-benchmark>=4.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.3",
+    "mypy>=1.8",
+]
+optimization = [
+    "scikit-optimize>=0.9",
+    "optuna>=3.5",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests requiring database/redis",
+    "regression: marks V1 vs V2 comparison tests",
+    "benchmark: marks performance benchmark tests",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true

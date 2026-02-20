@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  backtester-v2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8201:8201"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ava:ava2026@ava-db:5432/ava
+      - REDIS_URL=redis://redis:6379
+      - FMP_API_KEY=${FMP_API_KEY}
+      - LOG_LEVEL=INFO
+    depends_on:
+      ava-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  ava-db:
+    image: timescale/timescaledb:2.14.2-pg15
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=ava
+      - POSTGRES_PASSWORD=ava2026
+      - POSTGRES_DB=ava
+    volumes:
+      - ava_db_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ava"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+volumes:
+  ava_db_data:
+  redis_data:
