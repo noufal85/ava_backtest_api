@@ -83,6 +83,9 @@ markers = [
     "benchmark: marks performance benchmark tests",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

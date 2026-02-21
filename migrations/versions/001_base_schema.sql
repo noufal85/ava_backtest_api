@@ -184,7 +184,7 @@ CREATE TABLE backtester.backtest_results (
 -- One row per round-trip trade. Hypertable on entry_date for fast time-range queries.
 
 CREATE TABLE backtester.trades (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      UUID           NOT NULL DEFAULT gen_random_uuid(),
     backtest_id             UUID           NOT NULL REFERENCES backtester.backtests(id) ON DELETE CASCADE,
     symbol                  TEXT           NOT NULL,
     direction               TEXT           NOT NULL CHECK (direction IN ('long','short')),
@@ -206,7 +206,8 @@ CREATE TABLE backtester.trades (
     max_adverse_excursion   NUMERIC(15,2),
     regime_at_entry         TEXT,
     position_size_pct       NUMERIC(6,3),
-    metadata                JSONB          DEFAULT '{}'
+    metadata                JSONB          DEFAULT '{}',
+    PRIMARY KEY (id, entry_date)
 );
 
 SELECT create_hypertable('backtester.trades', 'entry_date');
@@ -221,7 +222,7 @@ CREATE INDEX ix_trades_symbol   ON backtester.trades (symbol, entry_date DESC);
 -- Useful for debugging and signal analysis. Hypertable on ts.
 
 CREATE TABLE backtester.signals (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id           UUID          NOT NULL DEFAULT gen_random_uuid(),
     backtest_id  UUID          NOT NULL REFERENCES backtester.backtests(id) ON DELETE CASCADE,
     symbol       TEXT          NOT NULL,
     ts           TIMESTAMPTZ   NOT NULL,
@@ -229,7 +230,8 @@ CREATE TABLE backtester.signals (
     strength     NUMERIC(4,3),
     confidence   NUMERIC(4,3),
     indicators   JSONB,        -- snapshot of indicator values at signal time
-    metadata     JSONB         DEFAULT '{}'
+    metadata     JSONB         DEFAULT '{}',
+    PRIMARY KEY (id, ts)
 );
 
 SELECT create_hypertable('backtester.signals', 'ts');
