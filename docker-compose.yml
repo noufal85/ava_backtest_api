@@ -17,6 +17,7 @@ services:
       - ZERODHA_API_SECRET=${ZERODHA_API_SECRET}
       - ALPACA_API_KEY=${ALPACA_API_KEY}
       - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - LOG_LEVEL=INFO
     depends_on:
       ava-db:
@@ -25,6 +26,7 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app/src
+      - ./data/cache:/app/data/cache
     restart: unless-stopped
 
   ava-db:

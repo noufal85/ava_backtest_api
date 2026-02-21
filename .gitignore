@@ -24,3 +24,5 @@ htmlcov/
 *.swp
 *.swo
 node_modules/
+data/cache/*.parquet
+uv.lock
