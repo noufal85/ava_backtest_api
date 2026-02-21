@@ -1,43 +1,40 @@
-"""WebSocket endpoint — real-time backtest progress."""
-from __future__ import annotations
+"""WebSocket — streams live backtest progress from run_store."""
+import asyncio
+import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import structlog
+
+from src.core.execution.run_store import get_run
 
 router = APIRouter(tags=["WebSocket"])
-logger = structlog.get_logger()
 
 
-class ConnectionManager:
-    def __init__(self):
-        self._connections: dict[str, list[WebSocket]] = {}
-
-    async def connect(self, backtest_id: str, ws: WebSocket):
-        await ws.accept()
-        self._connections.setdefault(backtest_id, []).append(ws)
-
-    def disconnect(self, backtest_id: str, ws: WebSocket):
-        if backtest_id in self._connections:
-            self._connections[backtest_id].remove(ws)
-
-    async def broadcast(self, backtest_id: str, message: dict):
-        for ws in self._connections.get(backtest_id, []):
-            try:
-                await ws.send_json(message)
-            except Exception:
-                pass
-
-
-ws_manager = ConnectionManager()
-
-
-@router.websocket("/ws/backtests/{backtest_id}")
-async def backtest_ws(websocket: WebSocket, backtest_id: str):
-    """Real-time backtest progress. Server pushes JSON frames."""
-    await ws_manager.connect(backtest_id, websocket)
+@router.websocket("/ws/backtest/{run_id}")
+async def backtest_ws(websocket: WebSocket, run_id: str):
+    """Stream backtest status until completed or failed."""
+    await websocket.accept()
     try:
         while True:
-            # Keep alive — client can send pings
-            await websocket.receive_text()
+            run = get_run(run_id)
+            if run is None:
+                await websocket.send_text(json.dumps({"error": "run not found", "run_id": run_id}))
+                break
+
+            payload = {
+                "run_id": run_id,
+                "status": run["status"],
+                "trade_count": len(run.get("trades", [])),
+                "progress_msg": run.get("progress_msg", ""),
+                "error": run.get("error"),
+                "total_return_pct": run.get("total_return_pct"),
+                "final_equity": run.get("final_equity"),
+            }
+            await websocket.send_text(json.dumps(payload))
+
+            if run["status"] in ("completed", "failed", "cancelled"):
+                break
+
+            await asyncio.sleep(1)
+
     except WebSocketDisconnect:
-        ws_manager.disconnect(backtest_id, websocket)
+        pass

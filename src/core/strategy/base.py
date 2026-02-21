@@ -33,6 +33,10 @@ class BaseStrategy(ABC):
         """
         ...
 
+    def generate(self, window) -> "Signal | None":
+        """Alias for generate_signal — called by the engine."""
+        return self.generate_signal(window)
+
     def get_parameter_schema(self) -> dict:
         """Returns JSON Schema describing accepted parameters."""
         return {}

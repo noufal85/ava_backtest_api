@@ -5,6 +5,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import src.strategies  # noqa: F401 — registers all strategies
 from src.api.v2 import analytics, backtests, data, markets, strategies, universes, websocket
 from src.api.v2.errors import value_error_handler
 
