@@ -37,6 +37,16 @@ dependencies = [
     # Configuration
     "pyyaml>=6.0",
 
+    # India data
+    "nsepy>=0.8",
+
+    # Optimization
+    "optuna>=3.5",
+    "scikit-optimize>=0.9",
+
+    # Serialization
+    "msgpack>=1.0",
+
     # Monitoring
     "structlog>=24.1",
     "prometheus-client>=0.20",
