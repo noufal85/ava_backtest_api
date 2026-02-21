@@ -20,6 +20,12 @@ class BollingerBands(BaseStrategy):
         self.bb_std_dev = bb_std_dev
         self._in_position: bool = False
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "bb_period":  {"type": "integer", "default": 20,  "minimum": 5,   "maximum": 100, "description": "Bollinger Band period"},
+            "bb_std_dev": {"type": "number",  "default": 2.0, "minimum": 0.5, "maximum": 4.0, "description": "Standard deviations for bands"},
+        }
+
     def get_warmup_periods(self) -> int:
         return self.bb_period + 1
 

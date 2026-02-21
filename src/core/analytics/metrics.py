@@ -70,21 +70,25 @@ def calculate_all_metrics(
     # Calmar ratio
     calmar = (cagr_pct / max_dd_pct) if max_dd_pct > 0 else 0.0
 
-    # Trade statistics
-    pnls = [t.get("pnl", 0) or 0 for t in trades]
+    # Trade statistics — use closed trades only (sell side or paired records with pnl)
+    closed = [
+        t for t in trades
+        if t.get("side") == "sell" or "pnl" in t or "exit_date" in t
+    ]
+    pnls = [float(t.get("pnl", t.get("realized_pnl", 0)) or 0) for t in closed]
     winning = [p for p in pnls if p > 0]
-    losing = [p for p in pnls if p <= 0]
+    losing  = [p for p in pnls if p <= 0]
     total_trades = len(pnls)
     win_rate_pct = (len(winning) / total_trades * 100) if total_trades > 0 else 0.0
     avg_winner = sum(winning) / len(winning) if winning else 0.0
-    avg_loser = sum(losing) / len(losing) if losing else 0.0
+    avg_loser  = sum(losing)  / len(losing)  if losing  else 0.0
     profit_factor = (sum(winning) / abs(sum(losing))) if losing and sum(losing) != 0 else 0.0
     avg_trade_pnl = sum(pnls) / total_trades if total_trades > 0 else 0.0
-    best_trade = max(pnls) if pnls else 0.0
+    best_trade  = max(pnls) if pnls else 0.0
     worst_trade = min(pnls) if pnls else 0.0
 
     # Hold days
-    hold_days_list = [t.get("hold_days", 0) or 0 for t in trades]
+    hold_days_list = [t.get("hold_days", 0) or 0 for t in closed]
     avg_hold_days = sum(hold_days_list) / len(hold_days_list) if hold_days_list else 0.0
 
     # Exposure %

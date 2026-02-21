@@ -38,6 +38,13 @@ class MACDCrossover(BaseStrategy):
         self.slow_ema = slow_ema
         self.signal_period = signal_period
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "fast_ema":      {"type": "integer", "default": 12, "minimum": 5,  "maximum": 50,  "description": "Fast EMA period"},
+            "slow_ema":      {"type": "integer", "default": 26, "minimum": 10, "maximum": 100, "description": "Slow EMA period"},
+            "signal_period": {"type": "integer", "default": 9,  "minimum": 3,  "maximum": 30,  "description": "Signal line period"},
+        }
+
     def get_warmup_periods(self) -> int:
         # Need slow_ema bars for EMA to stabilize + signal_period + 1 for crossing
         return self.slow_ema + self.signal_period + 1

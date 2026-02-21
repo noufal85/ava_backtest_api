@@ -66,6 +66,14 @@ class RSIMeanReversion(BaseStrategy):
         self._bars_held: int = 0
         self._in_position: bool = False
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "rsi_period":    {"type": "integer", "default": 14, "minimum": 5,  "maximum": 50,  "description": "RSI calculation period"},
+            "oversold":      {"type": "number",  "default": 30, "minimum": 10, "maximum": 45,  "description": "RSI oversold threshold (buy)"},
+            "overbought":    {"type": "number",  "default": 70, "minimum": 55, "maximum": 90,  "description": "RSI overbought threshold (exit)"},
+            "max_hold_days": {"type": "integer", "default": 20, "minimum": 5,  "maximum": 120, "description": "Max bars to hold before forced exit"},
+        }
+
     def get_warmup_periods(self) -> int:
         # Need rsi_period + 1 prices to get first RSI, plus 1 more for crossing detection
         return self.rsi_period + 2

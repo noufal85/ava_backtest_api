@@ -19,6 +19,12 @@ class OpeningRangeBreakout(BaseStrategy):
         self._in_position: bool = False
         self._bars_held: int = 0
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "range_pct": {"type": "number",  "default": 0.3, "minimum": 0.05, "maximum": 2.0, "description": "Opening range as % of prior close"},
+            "hold_bars": {"type": "integer", "default": 1,   "minimum": 1,    "maximum": 10,  "description": "Bars to hold after breakout"},
+        }
+
     def get_warmup_periods(self) -> int:
         return 2  # Minimal warmup — just need current bar
 

@@ -21,6 +21,12 @@ class DualMomentum(BaseStrategy):
         self._bar_count: int = 0
         self._in_position: bool = False
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "lookback_months":      {"type": "integer", "default": 12, "minimum": 1,  "maximum": 24, "description": "Absolute momentum lookback in months"},
+            "rebalance_frequency":  {"type": "integer", "default": 21, "minimum": 5,  "maximum": 63, "description": "Rebalance every N trading days"},
+        }
+
     def get_warmup_periods(self) -> int:
         return self._lookback_bars + 1
 

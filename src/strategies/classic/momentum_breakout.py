@@ -18,6 +18,12 @@ class MomentumBreakout(BaseStrategy):
         self.exit_ma_period = exit_ma_period
         self._in_position: bool = False
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "channel_period":  {"type": "integer", "default": 20, "minimum": 5,  "maximum": 100, "description": "Donchian channel lookback period"},
+            "exit_ma_period":  {"type": "integer", "default": 20, "minimum": 5,  "maximum": 100, "description": "Exit moving average period"},
+        }
+
     def get_warmup_periods(self) -> int:
         return max(self.channel_period, self.exit_ma_period) + 1
 

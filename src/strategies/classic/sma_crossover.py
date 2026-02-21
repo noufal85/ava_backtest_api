@@ -21,6 +21,12 @@ class SMACrossover(BaseStrategy):
         self.fast_period = fast_period
         self.slow_period = slow_period
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "fast_period": {"type": "integer", "default": 20, "minimum": 5, "maximum": 100, "description": "Fast SMA period"},
+            "slow_period": {"type": "integer", "default": 50, "minimum": 10, "maximum": 300, "description": "Slow SMA period"},
+        }
+
     def get_warmup_periods(self) -> int:
         return self.slow_period + 1
 

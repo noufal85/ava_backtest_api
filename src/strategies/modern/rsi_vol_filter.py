@@ -100,6 +100,17 @@ class RSIVolFilter(BaseStrategy):
         self.vol_exit_threshold = vol_exit_threshold
         self._in_position: bool = False
 
+    def get_parameter_schema(self) -> dict:
+        return {
+            "rsi_period":         {"type": "integer", "default": 14,   "minimum": 5,   "maximum": 50,  "description": "RSI period"},
+            "oversold":           {"type": "number",  "default": 30.0, "minimum": 10,  "maximum": 45,  "description": "RSI oversold level"},
+            "overbought":         {"type": "number",  "default": 70.0, "minimum": 55,  "maximum": 90,  "description": "RSI overbought level"},
+            "atr_period":         {"type": "integer", "default": 14,   "minimum": 5,   "maximum": 50,  "description": "ATR volatility period"},
+            "atr_rank_period":    {"type": "integer", "default": 100,  "minimum": 20,  "maximum": 252, "description": "ATR rank lookback period"},
+            "vol_threshold":      {"type": "number",  "default": 50.0, "minimum": 0,   "maximum": 100, "description": "Min ATR percentile rank to enter"},
+            "vol_exit_threshold": {"type": "number",  "default": 80.0, "minimum": 0,   "maximum": 100, "description": "ATR percentile rank for vol exit"},
+        }
+
     def get_warmup_periods(self) -> int:
         return max(self.rsi_period + 2, self.atr_period + self.atr_rank_period + 1)
 
