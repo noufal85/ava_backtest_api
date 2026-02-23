@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import src.strategies  # noqa: F401 — registers all strategies
-from src.api.v2 import analytics, backtests, data, markets, strategies, universes, websocket
+from src.api.v2 import analytics, backtests, data, markets, strategies, sync, universes, websocket
 from src.api.v2.errors import value_error_handler
 
 logger = structlog.get_logger()
@@ -38,6 +38,7 @@ app.include_router(backtests.router, prefix="/api/v2")
 app.include_router(strategies.router, prefix="/api/v2")
 app.include_router(universes.router, prefix="/api/v2")
 app.include_router(data.router, prefix="/api/v2")
+app.include_router(sync.router, prefix="/api/v2")
 app.include_router(analytics.router, prefix="/api/v2")
 app.include_router(websocket.router, prefix="/api/v2")
 

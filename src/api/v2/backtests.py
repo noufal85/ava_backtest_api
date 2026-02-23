@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 from src.api.v2.models import CreateBacktestRequest
 from src.core.analytics.metrics import calculate_all_metrics
-from src.core.data.providers.fmp import FMPProvider
+from src.core.data import get_provider
 from src.core.data.universe.symbols import get_symbols
 from src.core.execution.engine import BacktestEngine
 from src.core.execution.run_store import create_run, get_run, list_runs, update_run
@@ -177,7 +177,7 @@ async def _run_backtest_task(run_id: str, body: CreateBacktestRequest) -> None:
             market=market_code,
             initial_capital=body.initial_capital / max(len(symbols), 1),
         )
-        provider = FMPProvider()
+        provider = get_provider()
 
         raw_trades:    list[dict] = []
         equity_by_date: dict[str, float] = {}
