@@ -185,7 +185,7 @@ class BacktestEngine:
             portfolio.update_market_values(prices, bar_date)
 
             # ── STEP 4: Generate new signal from strategy ──
-            signal = strategy.generate(window)
+            signal = strategy.generate_signal(window)
             if signal and signal.action in ("buy", "sell", "exit"):
                 pending_signal = signal.action
 
