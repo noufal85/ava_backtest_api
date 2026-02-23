@@ -1,118 +1,264 @@
-# AvaAI Backtester
+# Ava Backtest Platform
 
-Multi-market quantitative trading research platform.
+Multi-market quantitative trading research platform with 124 strategies, AI-powered strategy builder, and Docker-first deployment.
+
+## Quick Start
+
+```bash
+# Clone and configure
+git clone https://github.com/noufal85/ava_backtest_api.git
+cd ava_backtest_api
+cp .env.example .env  # Add your FMP, Alpaca, AlphaVantage, Finnhub keys
+
+# Start everything
+docker compose up -d
+
+# Verify
+curl http://localhost:8201/api/v2/strategies | python3 -c "import json,sys; print(f'{len(json.load(sys.stdin))} strategies loaded')"
+```
+
+- **API**: http://localhost:8201 (FastAPI + Swagger at `/docs`)
+- **UI**: http://localhost:8203 (React + TradingView charts)
 
 ## Features
 
-- **8 Built-in Strategies** — SMA Crossover, RSI Mean Reversion, MACD Crossover, Bollinger Bands, Momentum Breakout, RSI + Volume Filter, Dual Momentum, Opening Range Breakout
-- **Multi-Market** — USA (NYSE/NASDAQ) + India (NSE/BSE) with extensible market registry
-- **Walk-Forward Analysis** — Out-of-sample validation to detect overfitting
-- **Optuna Optimization** — Bayesian hyperparameter tuning with overfitting score
-- **20+ Analytics Metrics** — Sharpe, Sortino, max drawdown, Calmar, portfolio correlation, and more
-- **Real-Time WebSocket Progress** — Live updates streamed to the UI during backtests
-- **React UI** — Modern frontend with strategy builder, market selector, and interactive charts
-- **Look-Ahead Bias Prevention** — Temporal DataWindow ensures strategies only see past data
+| Feature | Details |
+|---------|---------|
+| **124 Strategies** | 9 built-in + 115 custom (trend, mean reversion, momentum, pattern, volatility, calendar) |
+| **AI Strategy Builder** | Convert text descriptions, Pine Script, or screenshots → registered Python strategy |
+| **Multi-Market** | USA (NYSE/NASDAQ) + India (NSE/BSE) with extensible market registry |
+| **Walk-Forward Analysis** | Out-of-sample validation to detect overfitting |
+| **Optuna Optimization** | Bayesian hyperparameter tuning with overfitting score |
+| **20+ Analytics Metrics** | Sharpe, Sortino, max drawdown, Calmar, win rate, profit factor |
+| **Real-Time WebSocket** | Live progress updates streamed to UI during backtests |
+| **TradingView Charts** | Interactive equity curves via lightweight-charts |
+| **Docker-First** | Full stack in 4 containers: TimescaleDB, Redis, FastAPI, nginx UI |
 
 ## Architecture
 
 ```mermaid
 graph TD
-    UI[React UI :5173] --> API[FastAPI :8201]
-    API --> Engine[Backtest Engine]
-    API --> DB[(TimescaleDB)]
-    API --> Cache[(Redis)]
-    Engine --> FMP[FMP Provider US]
-    Engine --> NSEpy[NSEpy Provider IN]
-    Engine --> Strategies[8 Strategies]
-    Engine --> Analytics[Metrics + Optuna]
+    UI["React UI (nginx :8203)"] --> API["FastAPI :8201"]
+    API --> Engine["BacktestEngine"]
+    API --> WS["WebSocket /ws/backtests/{id}"]
+    Engine --> Strategies["124 Strategies"]
+    Engine --> Providers["Data Providers (FMP, Alpaca)"]
+    Engine --> Analytics["Metrics Calculator"]
+    API --> DB["TimescaleDB :5435"]
+    API --> Cache["Redis :6379"]
+    Strategies --> Classic["9 Built-in"]
+    Strategies --> Custom["115 Custom (auto-discovered)"]
 ```
 
-## Quickstart
+## Stack
 
-```bash
-# 1. Clone and enter the project
-git clone <repo-url> && cd ava-backtest-api
-
-# 2. Copy environment template
-cp .env.example .env
-
-# 3. Fill in your API keys in .env
-#    Required: FMP_API_KEY (for US market data)
-#    Optional: UPSTOX/ZERODHA keys (for India), ALPACA keys, OPENROUTER_API_KEY
-
-# 4. Start all services
-docker compose up
-
-# 5. Open the UI
-#    http://localhost:5173
-```
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| `ava-db` | `timescale/timescaledb:2.14.2-pg15` | 5435 | Market data + results |
+| `redis` | `redis:7-alpine` | 6379 | Cache + pub/sub |
+| `backtester-v2` | Custom Python 3.11 | 8201 | FastAPI backend |
+| `ava-ui` | Custom nginx | 8203 | React frontend |
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v2/backtest` | Run a backtest |
-| `GET` | `/api/v2/backtest/{id}` | Get backtest results |
-| `GET` | `/api/v2/strategies` | List available strategies |
-| `GET` | `/api/v2/markets` | List supported markets |
-| `POST` | `/api/v2/optimize` | Run Optuna optimization |
-| `GET` | `/api/v2/analytics/{id}` | Get detailed analytics |
-| `WS` | `/ws/backtest/{id}` | Real-time backtest progress |
+### Strategies
+```
+GET  /api/v2/strategies                    # List all (124 strategies)
+GET  /api/v2/strategies/{name}             # Detail with parameter schema
+```
+
+### Backtests
+```
+POST /api/v2/backtests                     # Create + run backtest
+GET  /api/v2/backtests                     # List runs (?market=US&status=completed)
+GET  /api/v2/backtests/{id}                # Get result (metrics, trades, equity curve)
+GET  /api/v2/backtests/{id}/trades         # Paired trade records
+GET  /api/v2/backtests/{id}/equity-curve   # YYYY-MM-DD + equity points
+WS   /ws/backtests/{id}                    # Live progress stream
+```
+
+### Example: Run a Backtest
+```bash
+curl -X POST http://localhost:8201/api/v2/backtests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "strategy_name": "sma_crossover",
+    "universe": "sp500_liquid",
+    "start_date": "2023-01-01",
+    "end_date": "2024-06-01",
+    "initial_capital": 100000,
+    "market": "US"
+  }'
+```
 
 ## Strategies
 
-| Strategy | Description |
-|----------|-------------|
-| **SMA Crossover** | Buy when fast SMA crosses above slow SMA, sell on cross below |
-| **RSI Mean Reversion** | Buy oversold (RSI < 30), sell overbought (RSI > 70) |
-| **MACD Crossover** | Trade MACD line / signal line crossovers with histogram confirmation |
-| **Bollinger Bands** | Mean reversion on band touches with squeeze detection |
-| **Momentum Breakout** | Enter on N-day high breakouts with volume confirmation |
-| **RSI + Volume Filter** | RSI signals filtered by above-average volume |
-| **Dual Momentum** | Combine absolute and relative momentum for trend following |
-| **Opening Range Breakout** | Trade breakouts from the first N-minute range |
+### Built-in (9)
+| Strategy | Category | Description |
+|----------|----------|-------------|
+| `sma_crossover` | Trend | Fast/slow SMA crossover |
+| `ema_crossover` | Trend | Fast/slow EMA crossover |
+| `macd_crossover` | Trend | MACD line/signal crossover |
+| `rsi_mean_reversion` | Mean Reversion | RSI oversold/overbought |
+| `bollinger_bands` | Mean Reversion | Bollinger Band bounce |
+| `momentum_breakout` | Momentum | Donchian channel breakout |
+| `dual_momentum` | Momentum | Absolute + relative momentum |
+| `opening_range_breakout` | Momentum | First N-bar range breakout |
+| `rsi_vol_filter` | Multi-Factor | RSI with volume confirmation |
 
-## Adding a New Market
+### Custom (115) — Migrated from trading-backtester
+All auto-discovered from `src/strategies/custom/`. Highlights:
 
-Four-step playbook (see [MULTI_MARKET_DESIGN.md](docs/MULTI_MARKET_DESIGN.md) for details):
+| Strategy | Category | Profit Factor* | Win Rate* |
+|----------|----------|---------------|-----------|
+| `tv_rsi_ema` | Mean Reversion | 11.27 | 85.2% |
+| `tv_rmi_3_strategy` | Momentum | 9.53 | — |
+| `dg_ma_cross` | Trend | 3.72 | 41.3% |
+| `dg_macd_ema` | Trend | 2.38 | 30.8% |
+| `dg_bb_rsi` | Mean Reversion | 2.00 | — |
+| `tv_zscore_mean_reversion` | Mean Reversion | 1.69 | 66.0% |
+| `connors_rsi` | Mean Reversion | 0.98 | 51.0% |
+| `tv_ichimoku_cloud` | Trend | — | — |
 
-1. **Add to registry** — Add a `MarketCode` enum entry and `MarketConfig` in `src/core/markets/registry.py`
-2. **Implement provider** — Create a `DataProvider` subclass in `src/core/data/providers/`
-3. **Insert universes** — Run SQL to add default symbol universes for the new market
-4. **Set env var** — Add any new API keys to `docker-compose.yml` and `.env.example`
+*Results from previous backtester — re-run on this platform for updated metrics.
 
-Everything else auto-configures: the `/api/v2/markets` endpoint, UI market selector, backtests, trades, analytics — all scoped to the new market automatically.
+See [docs/strategies/](docs/strategies/) for full catalog.
 
-## Adding a New Strategy
+### Adding a New Strategy
 
-1. Create a file in `src/strategies/classic/` (or `modern/`, `experimental/`)
-2. Subclass `StrategyBase` from `src/core/strategy/base.py`
-3. Implement `generate_signals(window: DataWindow) -> list[Signal]`
-4. Register in `src/core/strategy/registry.py`
+**Option 1: AI Strategy Builder**
+```bash
+python3 skills/strategy-builder/build_strategy.py \
+  --name my_strategy \
+  --category trend \
+  --input "Buy when 20 EMA crosses above 50 EMA, sell on cross-under"
+```
 
-## Tech Stack
+**Option 2: Manual**
+1. Create `src/strategies/custom/my_strategy.py`
+2. Extend `BaseStrategy`, use `@register` decorator
+3. Restart container: `docker compose restart backtester-v2`
 
-- **Backend** — FastAPI, Polars, SQLAlchemy 2.0, asyncpg
-- **Database** — TimescaleDB (PostgreSQL 15 + time-series extensions)
-- **Cache** — Redis 7 with LRU eviction
-- **Optimization** — Optuna 3.5 with Bayesian TPE sampler
-- **Frontend** — React + Vite
-- **Infrastructure** — Docker Compose, GitHub Actions CI
+See [docs/strategies/ADDING_STRATEGIES.md](docs/strategies/ADDING_STRATEGIES.md) for the full guide.
+
+## Strategy Interface
+
+```python
+from src.core.strategy.base import BaseStrategy, Signal
+from src.core.strategy.registry import register
+
+@register
+class MyStrategy(BaseStrategy):
+    name = "my_strategy"
+    version = "1.0.0"
+    description = "Description here"
+    category = "trend"  # trend | mean_reversion | momentum | multi_factor | volatility
+    tags = ["trend_following"]
+
+    def __init__(self, fast: int = 20, slow: int = 50):
+        self.fast = fast
+        self.slow = slow
+
+    def get_warmup_periods(self) -> int:
+        return self.slow + 5
+
+    def get_parameter_schema(self) -> dict:
+        return {
+            "fast": {"type": "integer", "default": 20, "minimum": 5, "maximum": 100},
+            "slow": {"type": "integer", "default": 50, "minimum": 10, "maximum": 300},
+        }
+
+    def generate_signal(self, window) -> Signal | None:
+        hist = window.historical()
+        cur = window.current_bar()
+        # Your logic here — use polars only, no look-ahead
+        return Signal("buy", 1.0, 0.8, {})
+```
+
+## Project Structure
+
+```
+ava-backtest-api/
+├── docker-compose.yml          # Full stack definition
+├── Dockerfile                  # Python 3.11 API image
+├── pyproject.toml              # Dependencies
+├── src/
+│   ├── main.py                 # Uvicorn entry point
+│   ├── api/v2/
+│   │   ├── app.py              # FastAPI app + CORS
+│   │   ├── backtests.py        # Backtest CRUD + engine task
+│   │   ├── strategies.py       # Strategy listing + detail
+│   │   ├── websocket.py        # Live progress WebSocket
+│   │   └── models.py           # Pydantic request models
+│   ├── core/
+│   │   ├── config.py           # Settings (from .env)
+│   │   ├── analytics/metrics.py # 20+ performance metrics
+│   │   ├── data/
+│   │   │   ├── providers/      # FMP, Alpaca, NSEpy
+│   │   │   └── universe/       # Symbol lists per market
+│   │   ├── execution/
+│   │   │   ├── engine.py       # BacktestEngine
+│   │   │   └── run_store.py    # In-memory run store
+│   │   ├── markets/registry.py # Market definitions (US, IN)
+│   │   └── strategy/
+│   │       ├── base.py         # BaseStrategy + Signal
+│   │       └── registry.py     # @register + get_strategy()
+│   └── strategies/
+│       ├── classic/            # 9 built-in strategies
+│       └── custom/             # 115 auto-discovered strategies
+├── docs/
+│   ├── strategies/             # Strategy documentation
+│   ├── api/                    # API reference
+│   └── architecture.md         # System design
+└── migrations/                 # Alembic DB migrations
+```
+
+## Configuration
+
+All via environment variables in `.env`:
+
+```bash
+# Data Providers
+FMP_API_KEY=...              # Financial Modeling Prep (required for US market)
+ALPACA_API_KEY=...           # Alpaca (alternative US data)
+ALPHAVANTAGE_API_KEY=...     # AlphaVantage (backup)
+FINNHUB_API_KEY=...          # Finnhub (news/sentiment)
+
+# Database
+DATABASE_URL=postgresql+asyncpg://ava:ava2026@ava-db:5432/ava
+
+# Redis
+REDIS_URL=redis://redis:6379/0
+
+# Strategy Builder (optional)
+OPENROUTER_API_KEY=...       # For AI strategy generation
+```
 
 ## Development
 
 ```bash
-# Install in dev mode
-pip install -e ".[dev]"
+# Rebuild after code changes
+docker compose build backtester-v2 && docker compose up -d backtester-v2
+
+# View logs
+docker compose logs backtester-v2 --tail=50 -f
 
 # Run tests
-pytest tests/unit/ -x -q
+docker compose exec backtester-v2 pytest
 
-# Lint
-ruff check src/
-mypy src/ --ignore-missing-imports
+# Add strategy without rebuild (src is volume-mounted)
+# Just drop a .py file in src/strategies/custom/ and restart:
+docker compose restart backtester-v2
 ```
+
+## Related Projects
+
+| Project | Description |
+|---------|-------------|
+| [ava_backtest_ui](https://github.com/noufal85/ava_backtest_ui) | React frontend with TradingView charts |
+| [ava_dashboard](https://github.com/noufal85/ava_dashboard) | Personal AI dashboard (Kanban, Journal, Cron, Blog) |
+| [trading-backtester](https://github.com/noufal85/trading-backtester) | Original backtester (strategies migrated from here) |
 
 ## License
 
-MIT
+Private — © 2026 Noufal
