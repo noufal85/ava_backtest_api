@@ -69,7 +69,7 @@ class GapAndGo(BaseStrategy):
         if historical_data.height < 1:
             return None
 
-        prev_close = historical_data.select(pl.col("close")[-1])[0,0]
+        prev_close = historical_data["close"][-1]
 
         open_price = current_bar["open"].item()
         close_price = current_bar["close"].item()

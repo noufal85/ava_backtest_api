@@ -86,7 +86,7 @@ class TvVixBased(BaseStrategy):
         realized_vols = []
         for i in range(self.vol_lookback, len(log_returns) + 1):
             window_data = log_returns[i-self.vol_lookback:i]
-            std_dev = np.std(window_data)
+            std_dev = float(window_data.std()) if hasattr(window_data, 'std') else np.std(window_data)
             realized_vols.append(std_dev)
         
         realized_vol_series = pl.Series(realized_vols) * 100
@@ -95,7 +95,7 @@ class TvVixBased(BaseStrategy):
         vol_mas = []
         for i in range(self.vol_ma_length, len(realized_vol_series) + 1):
             window_data = realized_vol_series[i-self.vol_ma_length:i]
-            vol_mas.append(np.mean(window_data))
+            vol_mas.append(window_data.mean())
         
         if not realized_vols or not vol_mas:
             return None

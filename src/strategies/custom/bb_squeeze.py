@@ -74,7 +74,7 @@ class BbSqueeze(BaseStrategy):
         if df.height < self.squeeze_lookback:
             return None
 
-        bandwidth_values = bandwidth.tail(self.squeeze_lookback).drop_nulls().to_list()
+        bandwidth_values = [v for v in bandwidth[-self.squeeze_lookback:] if v is not None]
         if len(bandwidth_values) < self.squeeze_lookback:
             return None
 
