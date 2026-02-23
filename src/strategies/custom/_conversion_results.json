@@ -1,0 +1,82 @@
+[
+  {
+    "name": "stop_loss_hunt_reversal",
+    "status": "ok"
+  },
+  {
+    "name": "dg_donchian_lwti_vol",
+    "status": "ok"
+  },
+  {
+    "name": "tv_pin_bar_magic",
+    "status": "ok"
+  },
+  {
+    "name": "trend_following_macd",
+    "status": "ok"
+  },
+  {
+    "name": "tv_tema_ribbon",
+    "status": "failed",
+    "errors": [
+      "name = \"tv_tema_ribbon\" not found in code"
+    ]
+  },
+  {
+    "name": "ibs_mean_reversion",
+    "status": "ok"
+  },
+  {
+    "name": "keltner_reversion_fast",
+    "status": "ok"
+  },
+  {
+    "name": "tv_linear_regression_channel",
+    "status": "failed",
+    "errors": [
+      "name = \"tv_linear_regression_channel\" not found in code"
+    ]
+  },
+  {
+    "name": "turn_of_month",
+    "status": "ok"
+  },
+  {
+    "name": "fifty_two_week_high",
+    "status": "failed",
+    "errors": [
+      "name = \"fifty_two_week_high\" not found in code"
+    ]
+  },
+  {
+    "name": "keltner_reversion_ultra",
+    "status": "ok"
+  },
+  {
+    "name": "range_trading",
+    "status": "ok"
+  },
+  {
+    "name": "dg_nnfx_aroon",
+    "status": "ok"
+  },
+  {
+    "name": "tv_hull_ma_crossover",
+    "status": "failed",
+    "errors": [
+      "name = \"tv_hull_ma_crossover\" not found in code"
+    ]
+  },
+  {
+    "name": "fibonacci_retracement",
+    "status": "ok"
+  },
+  {
+    "name": "tv_keltner_trend",
+    "status": "ok"
+  },
+  {
+    "name": "rs_rotation",
+    "status": "ok"
+  }
+]
