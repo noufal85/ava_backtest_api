@@ -5,6 +5,17 @@ import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 
+
+def ema(values, period):
+    """EMA from list."""
+    if len(values) < period:
+        return [None]*len(values)
+    k = 2/(period+1)
+    result = [None]*(period-1) + [sum(values[:period])/period]
+    for i in range(period, len(values)):
+        result.append(values[i]*k + result[-1]*(1-k))
+    return result
+
 @register
 class TvEmaMovingAway(BaseStrategy):
     name = "tv_ema_moving_away"

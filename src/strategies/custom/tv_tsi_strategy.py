@@ -38,11 +38,24 @@ from src.core.strategy.registry import register
 def ema(series: list[float], period: int) -> list[float]:
     """Calculates Exponential Moving Average (EMA) for a given series."""
     alpha = 2 / (period + 1)
-    ema = [None] * len(series)
-    ema[period - 1] = sum(series[:period]) / period  # Simple average for the first value
-    for i in range(period, len(series)):
-        ema[i] = alpha * series[i] + (1 - alpha) * ema[i - 1]
-    return ema
+    # Filter out leading Nones to find valid start
+    valid = [(i, v) for i, v in enumerate(series) if v is not None]
+    result = [None] * len(series)
+    if len(valid) < period:
+        return result
+    # Use first `period` valid values for seed
+    first_valid_idx = valid[0][0]
+    seed_vals = [v for _, v in valid[:period]]
+    seed_end = valid[period - 1][0]
+    result[seed_end] = sum(seed_vals) / period
+    prev = result[seed_end]
+    for i in range(seed_end + 1, len(series)):
+        if series[i] is not None and prev is not None:
+            prev = alpha * series[i] + (1 - alpha) * prev
+            result[i] = prev
+        else:
+            result[i] = prev
+    return result
 
 @register
 class TvTsiStrategy(BaseStrategy):
@@ -82,7 +95,7 @@ class TvTsiStrategy(BaseStrategy):
         abs_pc_smooth2 = ema(abs_price_change, period=self.short_length)
 
         # Calculate TSI
-        tsi = [100 * pc_smooth2[i] / abs_pc_smooth2[i] if abs_pc_smooth2[i] != None and abs_pc_smooth2[i] != 0 else 0 for i in range(len(closes))]
+        tsi = [100 * pc_smooth2[i] / abs_pc_smooth2[i] if pc_smooth2[i] is not None and abs_pc_smooth2[i] is not None and abs_pc_smooth2[i] != 0 else 0 for i in range(len(closes))]
 
         # Calculate signal line
         tsi_signal = ema(tsi, period=self.signal_length)

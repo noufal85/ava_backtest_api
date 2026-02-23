@@ -67,8 +67,8 @@ class TvExtrema(BaseStrategy):
         low_values = []
         high_values = []
         for period in periods:
-            low_values.append(df["low"].rolling(period, min_periods=1).min().to_list())
-            high_values.append(df["high"].rolling(period, min_periods=1).max().to_list())
+            low_values.append(df["low"].rolling_min(period, min_periods=1).to_list())
+            high_values.append(df["high"].rolling_max(period, min_periods=1).to_list())
 
         fall_low = [False] * len(df)
         rise_high = [False] * len(df)

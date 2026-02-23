@@ -45,11 +45,11 @@ def atr(df: pl.DataFrame, period: int) -> pl.Series:
     tr2 = abs(low - close.shift(1).fill_null(0.0))
 
     tr = pl.max([tr0, tr1, tr2])
-    return tr.rolling(window=period, min_periods=period).mean()
+    return tr.rolling_mean(period, min_periods=period)
 
 def volume_sma(df: pl.DataFrame, period: int) -> pl.Series:
     """Simple Moving Average of Volume."""
-    return df["volume"].rolling(window=period, min_periods=period).mean()
+    return df["volume"].rolling_mean(period, min_periods=period)
 
 @register
 class ModifiedTurtle(BaseStrategy):
@@ -87,9 +87,9 @@ class ModifiedTurtle(BaseStrategy):
         low = current_bar["low"][0]
         volume = current_bar["volume"][0]
 
-        high_n = df["high"].rolling(window=self.high_period, min_periods=self.high_period).max().to_list()[-2]
-        low_n = df["low"].rolling(window=self.high_period, min_periods=self.high_period).min().to_list()[-2]
-        volume_sma_n = df["volume"].rolling(window=self.high_period, min_periods=self.high_period).mean().to_list()[-2]
+        high_n = df["high"].rolling_max(self.high_period, min_periods=self.high_period).to_list()[-2]
+        low_n = df["low"].rolling_min(self.high_period, min_periods=self.high_period).to_list()[-2]
+        volume_sma_n = df["volume"].rolling_mean(self.high_period, min_periods=self.high_period).to_list()[-2]
 
         if high_n is None or low_n is None or volume_sma_n is None:
             return None

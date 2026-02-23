@@ -5,6 +5,17 @@ import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 
+
+def sma(values, period):
+    """SMA from list."""
+    result = []
+    for i in range(len(values)):
+        if i < period - 1:
+            result.append(None)
+        else:
+            result.append(sum(values[i-period+1:i+1])/period)
+    return result
+
 @register
 class TvZscoreMeanReversion(BaseStrategy):
     name: str = "tv_zscore_mean_reversion"

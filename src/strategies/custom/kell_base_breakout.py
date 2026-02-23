@@ -121,12 +121,12 @@ class KellBaseBreakout(BaseStrategy):
         df = df.with_columns(ema_fast=ema(df, self.ema_fast))
         df = df.with_columns(ema_slow=ema(df, self.ema_slow))
 
-        base_high = df["close"].shift(1).rolling(window=self.base_period, min_periods=self.base_period).max().alias("base_high")
-        base_low = df["close"].shift(1).rolling(window=self.base_period, min_periods=self.base_period).min().alias("base_low")
+        base_high = df["close"].shift(1).rolling_max(self.base_period, min_periods=self.base_period).alias("base_high")
+        base_low = df["close"].shift(1).rolling_min(self.base_period, min_periods=self.base_period).alias("base_low")
         df = df.with_columns(base_high=base_high)
         df = df.with_columns(base_low=base_low)
         df = df.with_columns(base_range=(pl.col("base_high") - pl.col("base_low")))
-        df = df.with_columns(avg_volume=df["volume"].rolling(window=self.base_period, min_periods=self.base_period).mean())
+        df = df.with_columns(avg_volume=df["volume"].rolling_mean(self.base_period, min_periods=self.base_period))
 
         # Entry conditions
         current_row = df.row(len(df) - 1, named=True)

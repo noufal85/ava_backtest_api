@@ -87,7 +87,7 @@ class TvMomentumRotation(BaseStrategy):
         return self.momentum_length + self.signal_length + 5
 
     def generate_signal(self, window) -> Signal | None:
-        historical_data = window.historical().sort("timestamp")
+        historical_data = window.historical().sort("ts")
         current_bar = window.current_bar()
         df = pl.concat([historical_data, current_bar])
 

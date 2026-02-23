@@ -77,7 +77,7 @@ class TvWilliamsVixFix(BaseStrategy):
             return None
 
         # Williams VIX Fix
-        highest_close = df["close"].rolling(window=self.wvf_pd).max().to_numpy()
+        highest_close = df["close"].rolling_max(self.wvf_pd).to_numpy()
         wvf = ((highest_close - df["low"].to_numpy()) / highest_close) * 100
 
         # WVF bands and thresholds
@@ -88,7 +88,7 @@ class TvWilliamsVixFix(BaseStrategy):
         wvf_range_high = pl.Series(wvf).rolling_max(window_size=self.wvf_lb).to_numpy() * self.wvf_ph
 
         # Williams VIX Fix Inverted
-        lowest_close = df["close"].rolling(window=self.wvf_pd).min().to_numpy()
+        lowest_close = df["close"].rolling_min(self.wvf_pd).to_numpy()
         wvf_inv = ((df["high"].to_numpy() - lowest_close) / lowest_close) * 100
 
         # WVF Inverted bands and thresholds

@@ -92,8 +92,8 @@ class Orb15min(BaseStrategy):
             return None
 
         current_bar = df.row(df.height - 1, named=True)
-        current_time = current_bar["timestamp"].time()
-        trade_date = current_bar["timestamp"].date()
+        current_time = current_bar["ts"].time()
+        trade_date = current_bar["ts"].date()
 
         orb_end_time = (time(9, 30, 0).replace(minute=9 + self.orb_minutes))
 
@@ -102,7 +102,7 @@ class Orb15min(BaseStrategy):
 
         # Calculate ORB within the first orb_minutes
         orb_df = df.filter(
-            (pl.col("timestamp").dt.time() >= time(9, 30)) & (pl.col("timestamp").dt.time() < orb_end_time)
+            (pl.col("ts").dt.time() >= time(9, 30)) & (pl.col("ts").dt.time() < orb_end_time)
         )
 
         if orb_df.is_empty():
@@ -118,8 +118,8 @@ class Orb15min(BaseStrategy):
         if current_time >= orb_end_time and current_bar["close"] > orb_high:
             # Check if this is the first breakout of the day
             past_breakouts = df.filter(
-                (pl.col("timestamp").dt.date() == trade_date) &
-                (pl.col("timestamp").dt.time() >= orb_end_time) &
+                (pl.col("ts").dt.date() == trade_date) &
+                (pl.col("ts").dt.time() >= orb_end_time) &
                 (pl.col("close") > orb_high)
             )
             if past_breakouts.height == 0:

@@ -87,9 +87,9 @@ class HolidayEffect(BaseStrategy):
         historical_data = window.historical()
         df = pl.concat([historical_data, current_bar])
 
-        current_date = current_bar["timestamp"][0].date()
+        current_date = current_bar["ts"][0].date()
 
-        trading_dates_sorted = df["timestamp"].dt.date().sort().to_list()
+        trading_dates_sorted = df["ts"].dt.date().sort().to_list()
         trading_dates_set = set(trading_dates_sorted)
 
         years = {d.year for d in trading_dates_sorted}

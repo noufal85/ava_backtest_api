@@ -53,8 +53,8 @@ def atr(df: pl.DataFrame, period: int) -> pl.Series:
 
 def bollinger_bands(df: pl.DataFrame, period: int, std_mult: float) -> dict:
     close = df["close"]
-    middle = close.rolling(window=period).mean().fill_null(strategy="mean")
-    std = close.rolling(window=period).std().fill_null(strategy="mean")
+    middle = close.rolling_mean(period).fill_null(strategy="mean")
+    std = close.rolling_std(period).fill_null(strategy="mean")
     upper = middle + std_mult * std
     lower = middle - std_mult * std
     return {"middle": middle, "upper": upper, "lower": lower}
@@ -109,7 +109,7 @@ class TvBollingerSqueeze(BaseStrategy):
         def linreg_slope(series):
             if len(series) < self.bb_length:
                 return float('nan')
-            y_values = series.to_numpy()
+            y_values = np.asarray(series)
             x_values = np.arange(len(y_values))
             x_mean = x_values.mean()
             y_mean = y_values.mean()
@@ -119,7 +119,14 @@ class TvBollingerSqueeze(BaseStrategy):
                 return 0
             return numerator / denominator
 
-        momentum = close_ema_diff.rolling(window=self.bb_length).apply(linreg_slope, eager=True)
+        # Manual rolling apply for linreg slope
+        vals = close_ema_diff.to_list()
+        mom_vals = [None] * len(vals)
+        for idx in range(self.bb_length - 1, len(vals)):
+            chunk = vals[idx - self.bb_length + 1:idx + 1]
+            if None not in chunk:
+                mom_vals[idx] = linreg_slope(np.array(chunk))
+        momentum = pl.Series(mom_vals)
 
         # Use shifted values to prevent look-ahead bias
         if len(sqz_on) < 2:

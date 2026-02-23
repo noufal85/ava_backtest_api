@@ -80,33 +80,38 @@ class TvHaSsl(BaseStrategy):
         return self.ssl_period + 5  # Add a small buffer
 
     def generate_signal(self, window) -> Signal | None:
-        df = window.historical().to_pandas()
-        current_bar = window.current_bar().to_pandas().iloc[0]
-        df = pl.concat([window.historical(), window.current_bar()]).to_pandas()
+        combined = pl.concat([window.historical(), window.current_bar()])
 
         ssl_period = self.ssl_period
 
+        opens = combined["open"].to_list()
+        highs = combined["high"].to_list()
+        lows = combined["low"].to_list()
+        closes = combined["close"].to_list()
+        n = len(opens)
+
         # Calculate Heikin Ashi values
-        ha_close = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-        ha_open = np.zeros(len(df))
-        ha_open[0] = (df["open"].iloc[0] + df["close"].iloc[0]) / 2
+        ha_close = [(opens[i] + highs[i] + lows[i] + closes[i]) / 4 for i in range(n)]
+        ha_open = [0.0] * n
+        ha_open[0] = (opens[0] + closes[0]) / 2
         
-        for i in range(1, len(df)):
+        for i in range(1, n):
             ha_open[i] = (ha_open[i-1] + ha_close[i-1]) / 2
         
-        ha_high = np.maximum.reduce([df["high"], ha_open, ha_close])
-        ha_low = np.minimum.reduce([df["low"], ha_open, ha_close])
+        ha_high = [max(highs[i], ha_open[i], ha_close[i]) for i in range(n)]
+        ha_low = [min(lows[i], ha_open[i], ha_close[i]) for i in range(n)]
 
         # Calculate SSL levels
-        sma_high = sma(ha_high.tolist(), period=ssl_period)
-        sma_low = sma(ha_low.tolist(), period=ssl_period)
+        sma_high = sma(ha_high, period=ssl_period)
+        sma_low = sma(ha_low, period=ssl_period)
 
         # Calculate Hlv (High-Low value indicator)
-        hlv = np.zeros(len(df), dtype=int)
-        hlv[0] = 0
+        hlv = [0] * n
         
-        for i in range(1, len(df)):
-            if ha_close[i] > sma_high[i]:
+        for i in range(1, n):
+            if sma_high[i] is None or sma_low[i] is None:
+                hlv[i] = hlv[i-1]
+            elif ha_close[i] > sma_high[i]:
                 hlv[i] = 1
             elif ha_close[i] < sma_low[i]:
                 hlv[i] = -1
@@ -114,8 +119,8 @@ class TvHaSsl(BaseStrategy):
                 hlv[i] = hlv[i-1]
 
         # Calculate SSL Up and Down
-        ssl_down = np.where(np.array(hlv) < 0, sma_high, sma_low)
-        ssl_up = np.where(np.array(hlv) < 0, sma_low, sma_high)
+        ssl_down = [sma_high[i] if hlv[i] < 0 else sma_low[i] for i in range(n)]
+        ssl_up = [sma_low[i] if hlv[i] < 0 else sma_high[i] for i in range(n)]
 
         # Use shifted values to avoid look-ahead bias
         if len(ssl_up) < 3:

@@ -134,7 +134,7 @@ class OrbBreakout(BaseStrategy):
         current_volume = df["volume"][-1]
 
         # Calculate average daily volume
-        daily_volume = df.group_by(pl.col("timestamp").dt.date()).agg(pl.col("volume").sum())
+        daily_volume = df.group_by(pl.col("ts").dt.date()).agg(pl.col("volume").sum())
         avg_daily_volume = daily_volume["volume"].tail(self.volume_lookback).mean()
 
         # Calculate ATR

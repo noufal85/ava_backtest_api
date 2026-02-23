@@ -2,6 +2,21 @@
 import polars as pl
 import numpy as np
 import math
+
+
+class LinearRegression:
+    """Minimal linear regression (no sklearn needed)."""
+    def fit(self, X, y):
+        X = np.array(X).reshape(-1, 1) if len(np.array(X).shape) == 1 else np.array(X)
+        y = np.array(y)
+        X_b = np.c_[np.ones(X.shape[0]), X]
+        theta = np.linalg.lstsq(X_b, y, rcond=None)[0]
+        self.intercept_ = theta[0]
+        self.coef_ = theta[1:]
+        return self
+    def predict(self, X):
+        X = np.array(X).reshape(-1, 1) if len(np.array(X).shape) == 1 else np.array(X)
+        return np.c_[np.ones(X.shape[0]), X] @ np.r_[self.intercept_, self.coef_]
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 

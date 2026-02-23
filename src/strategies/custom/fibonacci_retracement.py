@@ -139,9 +139,9 @@ class FibonacciRetracement(BaseStrategy):
         return max(self.swing_lookback, self.rsi_period, self.ema_period, self.vol_sma_period, self.atr_period) + 5
 
     def generate_signal(self, window) -> Signal | None:
-        historical_data = window.historical().sort("timestamp")
+        historical_data = window.historical().sort("ts")
         current_bar = window.current_bar()
-        df = pl.concat([historical_data, current_bar]).sort("timestamp")
+        df = pl.concat([historical_data, current_bar]).sort("ts")
 
         closes = df["close"].to_list()
         highs = df["high"].to_list()
@@ -165,8 +165,8 @@ class FibonacciRetracement(BaseStrategy):
 
         # Swing high/low over lookback (shifted to avoid lookahead)
         df = df.with_columns([
-            pl.col("high").shift(1).rolling(window=self.swing_lookback, min_periods=self.swing_lookback).max().alias("swing_high"),
-            pl.col("low").shift(1).rolling(window=self.swing_lookback, min_periods=self.swing_lookback).min().alias("swing_low"),
+            pl.col("high").shift(1).rolling_max(self.swing_lookback, min_periods=self.swing_lookback).alias("swing_high"),
+            pl.col("low").shift(1).rolling_min(self.swing_lookback, min_periods=self.swing_lookback).alias("swing_low"),
         ])
 
         df = df.with_columns([

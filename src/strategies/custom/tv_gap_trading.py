@@ -58,11 +58,11 @@ class TvGapTrading(BaseStrategy):
             return None
 
         # Calculate previous day's close
-        prev_close = historical_data.select(pl.col("close")[-1]).item()
+        prev_close = historical_data.select(pl.col("close").last()).item()
 
         # Get current bar data
-        current_open = current_bar.select(pl.col("open")[0]).item()
-        current_close = current_bar.select(pl.col("close")[0]).item()
+        current_open = current_bar["open"].item()
+        current_close = current_bar["close"].item()
 
         # Calculate gap down threshold
         gap_down_threshold = prev_close * (1 - self.min_gap_pct / 100)

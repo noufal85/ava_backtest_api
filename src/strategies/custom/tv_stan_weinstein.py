@@ -99,9 +99,9 @@ class TvStanWeinstein(BaseStrategy):
         return max(self.rs_period, self.volume_ma_length, self.price_ma_length, self.highest_lookback) + 10
 
     def generate_signal(self, window) -> Signal | None:
-        historical_data = window.historical().sort("timestamp")
+        historical_data = window.historical().sort("ts")
         current_bar = window.current_bar()
-        df = pl.concat([historical_data, current_bar]).sort("timestamp")
+        df = pl.concat([historical_data, current_bar]).sort("ts")
 
         closes = df["close"].to_list()
         highs = df["high"].to_list()

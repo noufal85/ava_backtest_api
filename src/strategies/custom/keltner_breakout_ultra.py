@@ -113,10 +113,10 @@ class KeltnerBreakoutUltra(BaseStrategy):
         ema_slow_values = ema(closes, self.ema_slow)
 
         # Base detection
-        base_high = pl.Series(closes[:-1]).rolling(self.base_period, min_periods=self.base_period).max().to_list()
-        base_low = pl.Series(closes[:-1]).rolling(self.base_period, min_periods=self.base_period).min().to_list()
-        base_range = [h - l for h, l in zip(base_high, base_low)]
-        avg_volume = pl.Series(volumes[:-1]).rolling(self.base_period, min_periods=self.base_period).mean().to_list()
+        base_high = pl.Series(closes[:-1]).rolling_max(self.base_period, min_periods=self.base_period).to_list()
+        base_low = pl.Series(closes[:-1]).rolling_min(self.base_period, min_periods=self.base_period).to_list()
+        base_range = [(h - l) if h is not None and l is not None else 0.0 for h, l in zip(base_high, base_low)]
+        avg_volume = pl.Series(volumes[:-1]).rolling_mean(self.base_period, min_periods=self.base_period).to_list()
 
         # Pad the lists to match the length of closes
         base_range = [0.0] * (len(closes) - len(base_range)) + base_range
@@ -132,11 +132,15 @@ class KeltnerBreakoutUltra(BaseStrategy):
         current_base_high = base_high[-1]
         current_base_range = base_range[-1]
 
+        # Guard None values
+        if any(v is None for v in [prev_atr, prev_ema_fast, prev_ema_slow, current_base_high, prev_avg_volume]):
+            return None
+
         # Conditions
         in_base = current_base_range < (self.base_atr_mult * prev_atr)
         uptrend = prev_ema_fast > prev_ema_slow
         breakout = closes[-1] > current_base_high
-        volume_confirm = volumes[-1] > (self.vol_mult * avg_volume[-1])
+        volume_confirm = volumes[-1] > (self.vol_mult * (avg_volume[-1] or 1))
 
         if in_base and uptrend and breakout and volume_confirm:
             return Signal(action="buy", strength=1.0, confidence=1.0)

@@ -71,7 +71,7 @@ class DgDonchianBreakout(BaseStrategy):
         for i in range(length, len(high)):
             is_new_high = True
             for j in range(1, length):
-                if don_upper[i] < don_upper[i-j]:
+                if don_upper[i] is None or don_upper[i-j] is None or don_upper[i] < don_upper[i-j]:
                     is_new_high = False
                     break
             new_high[i] = is_new_high

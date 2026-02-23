@@ -106,7 +106,7 @@ class TvQqeSignals(BaseStrategy):
         return max(self.rsi_period, self.rsi_smoothing) * 3 # Added buffer
 
     def generate_signal(self, window) -> Signal | None:
-        df = window.historical().sort("timestamp")
+        df = window.historical().sort("ts")
         current_bar = window.current_bar()
         if current_bar is not None:
             df = pl.concat([df, current_bar])

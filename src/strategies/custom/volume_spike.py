@@ -5,6 +5,17 @@ import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 
+
+def volume_sma(volumes, period):
+    """Volume SMA from list."""
+    result = []
+    for i in range(len(volumes)):
+        if i < period - 1:
+            result.append(None)
+        else:
+            result.append(sum(volumes[i-period+1:i+1])/period)
+    return result
+
 @register
 class VolumeSpike(BaseStrategy):
     name = "volume_spike"

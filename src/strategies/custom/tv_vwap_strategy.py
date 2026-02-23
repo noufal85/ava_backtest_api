@@ -38,7 +38,7 @@ def calculate_vwap(df: pl.DataFrame) -> pl.Series:
     """Calculates Volume Weighted Average Price (VWAP)."""
     typical_price = (df["high"] + df["low"] + df["close"]) / 3
     pv = typical_price * df["volume"]
-    vwap = (pv.cumsum() / df["volume"].cumsum()).alias("vwap")
+    vwap = (pv.cum_sum() / df["volume"].cum_sum()).alias("vwap")
     return vwap
 
 def calculate_ema(df: pl.DataFrame, period: int) -> pl.Series:
@@ -52,7 +52,7 @@ def calculate_ema(df: pl.DataFrame, period: int) -> pl.Series:
     for i in range(period, len(close)):
         ema[i] = alpha * close[i] + (1 - alpha) * ema[i - 1]
 
-    return pl.Series(ema, name="ema")
+    return pl.Series("ema", ema)
 
 @register
 class TvVwapStrategy(BaseStrategy):

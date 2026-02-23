@@ -5,6 +5,23 @@ import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 
+def atr(highs, lows, closes, period):
+    """ATR from lists."""
+    trs = []
+    for i in range(len(highs)):
+        tr = highs[i] - lows[i]
+        if i > 0:
+            tr = max(tr, abs(highs[i] - closes[i-1]), abs(lows[i] - closes[i-1]))
+        trs.append(tr)
+    result = []
+    for i in range(len(trs)):
+        if i < period - 1:
+            result.append(None)
+        else:
+            result.append(sum(trs[i-period+1:i+1]) / period)
+    return result
+
+
 @register
 class OpeningRangeBreakout(BaseStrategy):
     name = "opening_range_breakout"

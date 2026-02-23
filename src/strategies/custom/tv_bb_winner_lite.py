@@ -39,8 +39,8 @@ class BaseStrategy(ABC):
 
 def bollinger_bands(series: pl.Series, period: int, std_dev: float) -> dict[str, pl.Series]:
     """Calculates Bollinger Bands."""
-    basis = series.rolling(window=period, center=False).mean().alias("middle")
-    std = series.rolling(window=period, center=False).std().alias("std")
+    basis = series.rolling_mean(period).alias("middle")
+    std = series.rolling_std(period).alias("std")
     upper = (basis + std_dev * std).alias("upper")
     lower = (basis - std_dev * std).alias("lower")
     return {"upper": upper, "lower": lower, "middle": basis}

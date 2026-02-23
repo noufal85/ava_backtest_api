@@ -78,8 +78,8 @@ class TvIctSmartMoney(BaseStrategy):
         return highs, lows
 
     def generate_signal(self, window) -> Signal | None:
-        df = window.historical().with_columns(pl.col("timestamp").cast(pl.Date).alias("date"))
-        current_bar = window.current_bar().with_columns(pl.col("timestamp").cast(pl.Date).alias("date"))
+        df = window.historical().with_columns(pl.col("ts").cast(pl.Date).alias("date"))
+        current_bar = window.current_bar().with_columns(pl.col("ts").cast(pl.Date).alias("date"))
         df = pl.concat([df, current_bar])
 
         swing_length = self.swing_length

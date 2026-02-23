@@ -35,19 +35,27 @@ class BaseStrategy(ABC):
 
 from src.core.strategy.registry import register
 
-def days_until_month_end(dates: list[pl.Date]) -> list[int]:
-    """Computes the number of trading days until the end of the month."""
+import calendar
+from datetime import datetime as _dt
+
+def days_until_month_end(dates) -> list[int]:
+    """Computes the number of calendar days until the end of the month."""
     result = []
-    for date in dates:
-        last_day = pl.date(date.year, date.month, 31)
-        while last_day.month != date.month:
-            last_day = last_day.with_day(last_day.day - 1)
-        result.append((last_day - date).days)
+    for d in dates:
+        if hasattr(d, 'date'):
+            d = d.date()  # convert datetime to date
+        last_day_num = calendar.monthrange(d.year, d.month)[1]
+        result.append(last_day_num - d.day)
     return result
 
-def trading_day_of_month(dates: list[pl.Date]) -> list[int]:
+def trading_day_of_month(dates) -> list[int]:
     """Computes the trading day of the month."""
-    return [date.day for date in dates]
+    result = []
+    for d in dates:
+        if hasattr(d, 'date'):
+            d = d.date()
+        result.append(d.day)
+    return result
 
 @register
 class TurnOfMonthStrategy(BaseStrategy):
@@ -69,7 +77,7 @@ class TurnOfMonthStrategy(BaseStrategy):
         historical_data = window.historical()
 
         all_data = pl.concat([historical_data, current_bar])
-        dates = all_data["timestamp"].to_list()
+        dates = all_data["ts"].to_list()
 
         days_to_end = days_until_month_end(dates)
         day_of_month = trading_day_of_month(dates)

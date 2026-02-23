@@ -69,13 +69,13 @@ class IbsMeanReversion(BaseStrategy):
 
         # Average true range (high - low) over range_period
         bar_range = df["high"] - df["low"]
-        avg_range = bar_range.rolling(window=self.range_period, min_periods=self.range_period).mean()
+        avg_range = bar_range.rolling_mean(self.range_period, min_periods=self.range_period)
 
         # IBS: Internal Bar Strength
         ibs = (df["close"] - df["low"]) / bar_range.fill_nan(0.000001)
 
         # Rolling high over high_period
-        rolling_high = df["high"].rolling(window=self.high_period, min_periods=self.high_period).max()
+        rolling_high = df["high"].rolling_max(self.high_period, min_periods=self.high_period)
 
         # Lower band
         lower_band = rolling_high - self.band_multiplier * avg_range

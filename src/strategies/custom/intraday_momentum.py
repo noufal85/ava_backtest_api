@@ -5,6 +5,23 @@ import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
 
+
+def atr(highs, lows, closes, period):
+    """Average True Range."""
+    tr = []
+    for i in range(len(highs)):
+        if i == 0:
+            tr.append(highs[i] - lows[i])
+        else:
+            tr.append(max(highs[i] - lows[i], abs(highs[i] - closes[i-1]), abs(lows[i] - closes[i-1])))
+    result = []
+    for i in range(len(tr)):
+        if i < period - 1:
+            result.append(None)
+        else:
+            result.append(sum(tr[i-period+1:i+1]) / period)
+    return result
+
 @register
 class IntradayMomentum(BaseStrategy):
     name = "intraday_momentum"
@@ -49,7 +66,7 @@ class IntradayMomentum(BaseStrategy):
         highs = df["high"].to_list()
         lows = df["low"].to_list()
         opens = df["open"].to_list()
-        timestamps = df["timestamp"].to_list()
+        timestamps = df["ts"].to_list()
 
         # Calculate daily open
         daily_opens = {}

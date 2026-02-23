@@ -81,7 +81,7 @@ class RsRotation(BaseStrategy):
             return None
 
         close_prices = df["close"]
-        rs_return = close_prices.pct_change(periods=self.lookback)
+        rs_return = close_prices.pct_change(n=self.lookback)
         sma_values = sma(close_prices, self.market_filter_sma)
 
         current_rs = rs_return[-1]

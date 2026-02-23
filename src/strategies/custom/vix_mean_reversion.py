@@ -38,7 +38,11 @@ from src.core.strategy.registry import register
 def realized_vol(data: pl.DataFrame, period: int = 10) -> pl.Series:
     """Compute realized volatility from high, low, close prices."""
     log_returns = (pl.Series(np.log(data["close"]))).diff().drop_nulls()
-    return log_returns.rolling_mean(period).std() * math.sqrt(252)
+    rolling = log_returns.rolling_std(window_size=period)
+    if rolling.is_empty():
+        return 0.0
+    val = rolling[-1]
+    return (val if val is not None else 0.0) * math.sqrt(252)
 
 @register
 class VixMeanReversion(BaseStrategy):
@@ -80,8 +84,8 @@ class VixMeanReversion(BaseStrategy):
         if len(combined_data) < self.long_vol_period:
             return None
 
-        short_vol = realized_vol(combined_data, period=self.short_vol_period).to_list()[-1]
-        long_vol = realized_vol(combined_data, period=self.long_vol_period).to_list()[-1]
+        short_vol = realized_vol(combined_data, period=self.short_vol_period)
+        long_vol = realized_vol(combined_data, period=self.long_vol_period)
 
         if long_vol == 0:
             return None
@@ -92,16 +96,16 @@ class VixMeanReversion(BaseStrategy):
             if vol_ratio > self.vol_spike_mult:
                 self.in_trade = True
                 self.hold_count = 0
-                self.entry_price = current_bar["close"][0]
-                self.entry_date = current_bar["timestamp"][0]
+                self.entry_price = current_bar["close"].item()
+                self.entry_date = current_bar["ts"].item()
                 self.direction = "buy"
                 strength = min(1.0, vol_ratio - self.vol_spike_mult)
                 return Signal(action="buy", strength=strength, confidence=1.0, metadata={"vol_ratio": vol_ratio})
             elif vol_ratio < self.vol_complacency_mult:
                 self.in_trade = True
                 self.hold_count = 0
-                self.entry_price = current_bar["close"][0]
-                self.entry_date = current_bar["timestamp"][0]
+                self.entry_price = current_bar["close"].item()
+                self.entry_date = current_bar["ts"].item()
                 self.direction = "sell"
                 strength = min(1.0, self.vol_complacency_mult - vol_ratio)
                 return Signal(action="sell", strength=strength, confidence=1.0, metadata={"vol_ratio": vol_ratio})

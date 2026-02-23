@@ -1,9 +1,32 @@
+# helpers defined locally below
 """bb_squeeze — converted from trading-backtester."""
 import polars as pl
 import numpy as np
 import math
 from src.core.strategy.base import BaseStrategy, Signal
 from src.core.strategy.registry import register
+
+
+def bollinger_bands(closes, period=20, std=2.0):
+    """Bollinger Bands. Returns (middle, upper, lower) lists."""
+    import math
+    middle = []
+    upper = []
+    lower = []
+    for i in range(len(closes)):
+        if i < period - 1:
+            middle.append(None)
+            upper.append(None)
+            lower.append(None)
+        else:
+            window = closes[i-period+1:i+1]
+            m = sum(window) / period
+            variance = sum((x - m) ** 2 for x in window) / period
+            s = math.sqrt(variance)
+            middle.append(m)
+            upper.append(m + std * s)
+            lower.append(m - std * s)
+    return middle, upper, lower
 
 @register
 class BbSqueeze(BaseStrategy):
@@ -41,11 +64,8 @@ class BbSqueeze(BaseStrategy):
 
         close_prices = df["close"]
         
-        bb = bollinger_bands(close_prices, period=self.bb_period, std=self.bb_std)
-        upper_band = bb["upper"]
-        middle_band = bb["middle"]
-        lower_band = bb["lower"]
-        bandwidth = bb["bandwidth"]
+        middle_band, upper_band, lower_band = bollinger_bands(close_prices, period=self.bb_period, std=self.bb_std)
+        bandwidth = [(u - l) / m if m and u is not None and l is not None and m != 0 else None for u, l, m in zip(upper_band, lower_band, middle_band)]
 
         if upper_band is None or middle_band is None or lower_band is None or bandwidth is None:
             return None

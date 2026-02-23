@@ -44,11 +44,11 @@ def ema(series: pl.Series, period: int) -> pl.Series:
 def rsi(series: pl.Series, period: int) -> pl.Series:
     delta = series.diff().drop_nulls()
     up, down = delta.clone(), delta.clone()
-    up = up.with_columns(pl.when(up < 0).then(0).otherwise(up))
-    down = down.with_columns(pl.when(down > 0).then(0).otherwise(down.abs()))
+    up = pl.Series([max(0, v) for v in up.to_list()])
+    down = pl.Series([abs(min(0, v)) for v in down.to_list()])
 
-    avg_gain = up.rolling(period).mean().extend_null(period - 1)
-    avg_loss = down.rolling(period).mean().extend_null(period - 1)
+    avg_gain = up.rolling_mean(period).extend_null(period - 1)
+    avg_loss = down.rolling_mean(period).extend_null(period - 1)
 
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
@@ -63,12 +63,12 @@ def atr(df: pl.DataFrame, period: int) -> pl.Series:
     tr2 = abs(high - close.shift(1).fill_null(close[0]))
     tr3 = abs(low - close.shift(1).fill_null(close[0]))
     tr = pl.max([tr1, tr2, tr3])
-    atr = tr.rolling(period).mean().extend_null(period - 1)
+    atr = tr.rolling_mean(period).extend_null(period - 1)
     return atr
 
 def bollinger_bands(series: pl.Series, period: int, std: float) -> dict:
-    middle = series.rolling(period).mean().extend_null(period - 1)
-    std_dev = series.rolling(period).std().extend_null(period - 1)
+    middle = series.rolling_mean(period).extend_null(period - 1)
+    std_dev = series.rolling_std(period).extend_null(period - 1)
     upper = middle + std_dev * std
     lower = middle - std_dev * std
     return {"upper": upper, "middle": middle, "lower": lower}

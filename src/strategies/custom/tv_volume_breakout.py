@@ -131,9 +131,9 @@ class TvVolumeBreakout(BaseStrategy):
         return max(self.volume_ma_period, self.price_breakout_period) + 2
 
     def generate_signal(self, window) -> Signal | None:
-        historical_data = window.historical().sort("timestamp")
+        historical_data = window.historical().sort("ts")
         current_bar = window.current_bar()
-        df = pl.concat([historical_data, current_bar]).sort("timestamp")
+        df = pl.concat([historical_data, current_bar]).sort("ts")
 
         closes = df["close"].to_list()
         highs = df["high"].to_list()

@@ -37,11 +37,11 @@ class BaseStrategy(ABC):
 def realized_vol(df: pl.DataFrame, period: int = 20) -> pl.Series:
     """Calculates realized volatility."""
     log_returns = np.log(df["close"]).diff().dropna()
-    return log_returns.rolling(period).std()
+    return log_returns.rolling_std(period)
 
 def sma(series: pl.Series, period: int = 20) -> pl.Series:
     """Calculates Simple Moving Average."""
-    return series.rolling(period).mean()
+    return series.rolling_mean(period)
 
 @register
 class TvVixBased(BaseStrategy):
@@ -128,7 +128,7 @@ class TvVixBased(BaseStrategy):
         long_exit = complacency_condition
 
         if long_entry:
-            self.position_entry_date = df["timestamp"][-1]
+            self.position_entry_date = df["ts"][-1]
             return Signal(
                 action="buy",
                 strength=1.0,
@@ -140,7 +140,7 @@ class TvVixBased(BaseStrategy):
                 }
             )
         elif long_exit and self.position_entry_date is not None:
-            days_held = (df["timestamp"][-1] - self.position_entry_date).days
+            days_held = (df["ts"][-1] - self.position_entry_date).days
             if days_held >= self.min_hold_days:
                 self.position_entry_date = None
                 return Signal(

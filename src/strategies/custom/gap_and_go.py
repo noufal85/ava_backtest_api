@@ -71,10 +71,10 @@ class GapAndGo(BaseStrategy):
 
         prev_close = historical_data.select(pl.col("close")[-1])[0,0]
 
-        open_price = current_bar["open"][0]
-        close_price = current_bar["close"][0]
-        high_price = current_bar["high"][0]
-        low_price = current_bar["low"][0]
+        open_price = current_bar["open"].item()
+        close_price = current_bar["close"].item()
+        high_price = current_bar["high"].item()
+        low_price = current_bar["low"].item()
 
         if prev_close is None or math.isnan(prev_close) or prev_close == 0:
             return None
